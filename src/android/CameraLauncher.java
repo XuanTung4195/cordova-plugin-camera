@@ -417,7 +417,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                 File croppedFile = createCaptureFile(JPEG);
                 croppedFilePath = croppedFile.getAbsolutePath();
                 croppedUri = Uri.fromFile(croppedFile);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, croppedUri);
+                // intent.putExtra(MediaStore.EXTRA_OUTPUT, croppedUri);
             } else {
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -470,7 +470,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             croppedUri = Uri.parse(croppedFilePath);
             cropIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             cropIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            cropIntent.putExtra("output", croppedUri);
+            // cropIntent.putExtra("output", croppedUri);
 
             // start the activity - we handle returning in onActivityResult
 
@@ -541,6 +541,16 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         // If sending base64 image back
         if (destType == DATA_URL) {
             bitmap = getScaledAndRotatedBitmap(sourcePath);
+
+            if (bitmap == null && intent.getData() != null) {
+                Uri srcUri = (Uri) intent.getData();
+                bitmap = getScaledAndRotatedBitmap(srcUri.toString());
+            }
+
+            if (bitmap == null && intent.getExtras().get("src_uri") instanceof Uri) {
+                Uri srcUri = (Uri)intent.getExtras().get("src_uri");
+                bitmap = getScaledAndRotatedBitmap(srcUri.toString());
+            }
 
             if (bitmap == null) {
                 // Try to get the bitmap from intent.
@@ -1274,7 +1284,11 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                 id--;
             }
             Uri uri = Uri.parse(contentStore + "/" + id);
-            this.cordova.getActivity().getContentResolver().delete(uri, null, null);
+            try {
+                this.cordova.getActivity().getContentResolver().delete(uri, null, null);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             cursor.close();
         }
     }
